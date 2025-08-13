@@ -140,11 +140,11 @@ Project_allocation.belongsTo(Role,{
 
 // Project has many release, release belongs to one release
 Project.hasMany(Releases,{
-  foreignKey: 'releases_id',
+  foreignKey: 'project_id',
 });
 
 Releases.belongsTo(Project,{
-  foreignKey: 'releases_id'
+  foreignKey: 'project_id'
 });
 
 

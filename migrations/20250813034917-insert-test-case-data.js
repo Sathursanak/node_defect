@@ -10,9 +10,9 @@ module.exports = {
           steps: "Enter username and password, click login",
           defect_type_id: 1,
           modules_id: 1,
-          project_id: 3,
+          project_id: 1,
           severity_id: 1,
-          sub_module_id: 6,
+          sub_module_id: 1,
         },
         {
           test_case_id: "TC002",
@@ -20,9 +20,9 @@ module.exports = {
           steps: "Test all form validations for user registration",
           defect_type_id: 1,
           modules_id: 1,
-          project_id: 3,
+          project_id: 1,
           severity_id: 2,
-          sub_module_id: 6,
+          sub_module_id: 1,
         },
       ],
       {}

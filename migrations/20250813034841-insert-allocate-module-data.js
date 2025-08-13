@@ -7,19 +7,19 @@ module.exports = {
         {
           user_id: null,
           modules_id: 1,
-          sub_module_id: 6,
+          sub_module_id: 1,
           project_id: null,
         },
         {
           user_id: null,
           modules_id: 2,
-          sub_module_id: 7,
+          sub_module_id: 2,
           project_id: null,
         },
         {
           user_id: null,
           modules_id: 3,
-          sub_module_id: 9,
+          sub_module_id: 4,
           project_id: null,
         },
       ],
