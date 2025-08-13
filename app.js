@@ -42,6 +42,9 @@ app.use(express.json());
 
 app.use('/api/designations', designationRoutes);
 
+const projectRoutes = require('./routes/projectRoutes');
+app.use('/api/projects',projectRoutes);
+
 // Root route
 app.get('/', async (req, res) => {
   try {
