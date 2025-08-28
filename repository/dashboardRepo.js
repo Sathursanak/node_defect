@@ -83,71 +83,21 @@ async function getDefectDensity() {
   }));
 }
 
-// get severity breakdown counts per project
-async function getDefectSeverityCounts() {
-  try {
-    return await sequelize.query(
-      `
-      SELECT
-         p.id,
-         p.project_name,
-         p.kloc,
-         SUM(CASE WHEN ds.defect_severity_name = 'blocker' THEN 1 ELSE 0 END) as total_blocker,
-         SUM(CASE WHEN ds.defect_severity_name = 'critical' THEN 1 ELSE 0 END) as total_critical,
-         SUM(CASE WHEN ds.defect_severity_name = 'major' THEN 1 ELSE 0 END) as total_major,
-         SUM(CASE WHEN ds.defect_severity_name = 'minor' THEN 1 ELSE 0 END) as total_minor
-      FROM
-         project p
-      LEFT JOIN
-         defect d ON p.id = d.project_id
-      LEFT JOIN
-         defect_severity ds ON d.defect_severity_id = ds.id
-      GROUP BY
-         p.id, p.project_name, p.kloc
-      `,
-      {
-        type: sequelize.QueryTypes.SELECT,
-        raw: true,
-      }
-    );
-  } catch (error) {
-    // If deadlock, retry once
-    if (
-      error.message.includes("Deadlock") ||
-      error.message.includes("deadlock")
-    ) {
-      console.log("Deadlock detected, retrying query...");
-      await new Promise((resolve) => setTimeout(resolve, 100)); // Wait 100ms
-      return await sequelize.query(
-        `
-        SELECT
-           p.id,
-           p.project_name,
-           p.kloc,
-           SUM(CASE WHEN ds.defect_severity_name = 'blocker' THEN 1 ELSE 0 END) as total_blocker,
-           SUM(CASE WHEN ds.defect_severity_name = 'critical' THEN 1 ELSE 0 END) as total_critical,
-           SUM(CASE WHEN ds.defect_severity_name = 'major' THEN 1 ELSE 0 END) as total_major,
-           SUM(CASE WHEN ds.defect_severity_name = 'minor' THEN 1 ELSE 0 END) as total_minor
-        FROM
-           project p
-        LEFT JOIN
-           defect d ON p.id = d.project_id
-        LEFT JOIN
-           defect_severity ds ON d.defect_severity_id = ds.id
-        GROUP BY
-           p.id, p.project_name, p.kloc
-        `,
-        {
-          type: sequelize.QueryTypes.SELECT,
-          raw: true,
-        }
-      );
-    }
-    throw error;
-  }
+// compute defect to remark ratio (using valid_defects vs total_defects)
+async function getDefectRemarkRatio() {
+  const counts = await getDefectCounts();
+  return counts.map((row) => ({
+    ...row,
+    defect_to_remark_ratio:
+      row.total_defects && row.total_defects !== 0
+        ? row.valid_defects / row.total_defects
+        : null,
+  }));
 }
+
 
 module.exports = {
   getDefectDensity,
   getDefectCounts,
+  getDefectRemarkRatio,
 };
