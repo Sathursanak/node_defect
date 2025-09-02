@@ -50,6 +50,9 @@ app.use("/api/defects", defectRoutes);
 const dashboardRoutes = require("./routes/dashboardRoutes");
 app.use("/api/dashboard", dashboardRoutes);
 
+const defectDistributionByTypeRoutes = require("./routes/defectDistributionByTypeRoutes");
+app.use("/api/defect-distribution-by-type", defectDistributionByTypeRoutes);
+
 // Root route
 app.get("/", async (req, res) => {
   try {
