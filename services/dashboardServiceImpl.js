@@ -1,4 +1,5 @@
 const dashboardRepo = require("../repository/dashboardRepo");
+const severityBreakdownRepo = require("../repository/severityBreakdown");
 
 function getDefectDensityRange(density) {
   if (density >= 0 && density <= 7) {
@@ -89,4 +90,56 @@ async function getDefectRemarkRatio(projectId = null) {
 module.exports = {
   getDefectDensity,
   getDefectRemarkRatio,
+  async getSeverityIndex(projectId = null) {
+    try {
+      const data = await dashboardRepo.getSeverityIndex();
+
+      let filtered = data;
+      if (projectId) {
+        filtered = data.filter((p) => p.id == projectId);
+        if (filtered.length === 0) {
+          throw new Error(`Project with ID ${projectId} not found`);
+        }
+      }
+
+      const processed = filtered.map((p) => {
+        const percent = p.severity_index_percent == null ? null : Number(p.severity_index_percent.toFixed(2));
+        let level = null;
+        let color = null;
+        if (percent != null) {
+          // <25 Green, 25–49 Yellow, ≥50 Red
+          if (percent < 25) { level = "Green"; color = "green"; }
+          else if (percent < 50) { level = "Yellow"; color = "yellow"; }
+          else { level = "Red"; color = "red"; }
+        }
+        return {
+          ...p,
+          severity_index_percent: percent,
+          severity_index_level: level,
+          severity_index_color: color,
+        };
+      });
+
+      return processed;
+    } catch (error) {
+      throw new Error(`Failed to get severity index: ${error.message}`);
+    }
+  },
+  async getSeverityBreakdown(projectId = null) {
+    try {
+      if (!projectId) {
+        throw new Error("Project ID is required for severity breakdown");
+      }
+      
+      const data = await severityBreakdownRepo.getSeverityBreakdown(projectId);
+      
+      if (!data || data.length === 0) {
+        throw new Error(`No severity breakdown data found for project ID ${projectId}`);
+      }
+      
+      return data;
+    } catch (error) {
+      throw new Error(`Failed to get severity breakdown: ${error.message}`);
+    }
+  },
 };

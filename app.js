@@ -62,5 +62,5 @@ app.get("/", async (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log("Server running on http://192.168.8.120:3000");
+  console.log("Server running on http://192.168.1.49:3000");
 });

@@ -12,13 +12,13 @@ const Defect_status = sequelize.define(
     color_code:{
      type: DataTypes.STRING(225),
      allowNull: false,
-     unique: true,
+    //  unique: true,
 
     },
     defect_status_name: {
       type:DataTypes.STRING(225),
       allowNull: false,
-      unique: true, 
+      // unique: true, 
     }
   },{
     tableName: "defect_status",
