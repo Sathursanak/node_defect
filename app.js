@@ -53,6 +53,9 @@ app.use("/api/dashboard", dashboardRoutes);
 const defectDistributionByTypeRoutes = require("./routes/defectDistributionByTypeRoutes");
 app.use("/api/defect-distribution-by-type", defectDistributionByTypeRoutes);
 
+const defectsByModuleRoutes = require("./routes/defectsByModuleRoutes");
+app.use("/api/defects-by-module", defectsByModuleRoutes);
+
 // Root route
 app.get("/", async (req, res) => {
   try {
