@@ -50,7 +50,10 @@ module.exports = {
       const data = await dashboardService.getSeverityBreakdown(projectId);
       res.status(200).json(data);
     } catch (error) {
-      if (error.message.includes("not found") || error.message.includes("No severity breakdown data found")) {
+      if (
+        error.message.includes("not found") ||
+        error.message.includes("No severity breakdown data found")
+      ) {
         res.status(404).json({ message: error.message });
       } else if (error.message.includes("Project ID is required")) {
         res.status(400).json({ message: error.message });

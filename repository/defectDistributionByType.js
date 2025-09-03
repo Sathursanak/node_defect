@@ -1,21 +1,14 @@
 const sequelize = require("../db");
 
-// Color mapping for defect types
-const getDefectTypeColor = (defectTypeName) => {
-  const colorMap = {
-    'UI Bug': '#FF0000',           // Red
-    'Functional Bug': '#FFA500',   // Orange
-    'Performance': '#FFFF00',      // Yellow
-    'Security': '#0000FF',         // Blue
-    'Crash': '#800000',            // Maroon
-    'Data Loss': '#FF00FF',        // Magenta
-    'Compatibility': '#808080',    // Gray
-    'Usability': '#00FF00',        // Green
-    'Installation': '#000080',     // Navy
-    'Other': '#C0C0C0'            // Silver
-  };
-  
-  return colorMap[defectTypeName] || '#808080'; // Default gray
+// Color palette for defect types
+const colors = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1',
+  '#96CEB4', '#FFEAA7', '#DDA0DD',
+  '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+];
+
+const getDefectTypeColor = (index) => {
+  return colors[index % colors.length];
 };
 
 const getDefectDistributionByType = async (projectId) => {
@@ -41,21 +34,26 @@ const getDefectDistributionByType = async (projectId) => {
     type: sequelize.QueryTypes.SELECT,
   });
 
-  // Calculate total valid defects for percentage calculation
-  const totalValidDefects = results.reduce((sum, row) => sum + parseInt(row.valid_defect_count), 0);
+  // Total valid defects
+  const totalValidDefects = results.reduce(
+    (sum, row) => sum + parseInt(row.valid_defect_count || 0),
+    0
+  );
 
-  // Transform results to include percentages and filter out types with no valid defects
+  // Map with dynamic colors
   const defectDistribution = results
-    .filter(row => parseInt(row.valid_defect_count) > 0) // Only include types with valid defects
-    .map(row => {
-      const validDefects = parseInt(row.valid_defect_count);
-      const percentage = totalValidDefects > 0 ? parseFloat(((validDefects / totalValidDefects) * 100).toFixed(2)) : 0;
-      
+    .filter(row => parseInt(row.valid_defect_count || 0) > 0)
+    .map((row, index) => {
+      const validDefects = parseInt(row.valid_defect_count || 0);
+      const percentage = totalValidDefects > 0 
+        ? parseFloat(((validDefects / totalValidDefects) * 100).toFixed(2)) 
+        : 0;
+
       return {
         defect_type_id: parseInt(row.defect_type_id),
         defect_type_name: row.defect_type_name,
-        defect_type_color: getDefectTypeColor(row.defect_type_name),
-        total_defects: parseInt(row.total_defect_count),
+        defect_type_color: getDefectTypeColor(index), // dynamic assignment
+        total_defects: parseInt(row.total_defect_count || 0),
         valid_defects: validDefects,
         percentage: percentage
       };

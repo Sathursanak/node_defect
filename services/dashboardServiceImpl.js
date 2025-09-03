@@ -76,7 +76,7 @@ async function getDefectRemarkRatio(projectId = null) {
     const processedData = filteredData.map((project) => {
       const total = Number(project.total_defects ?? 0);
       const ratio = project.defect_to_remark_ratio;
-      
+
       // If no defects, return null values like severity_index
       if (total === 0 || ratio == null) {
         return {
@@ -86,7 +86,7 @@ async function getDefectRemarkRatio(projectId = null) {
           remark_ratio_color: null,
         };
       }
-      
+
       const percent = Number((ratio * 100).toFixed(2));
       const range = getRemarkRatioRange(percent, total);
 
@@ -120,14 +120,24 @@ module.exports = {
       }
 
       const processed = filtered.map((p) => {
-        const percent = p.severity_index_percent == null ? null : Number(p.severity_index_percent.toFixed(2));
+        const percent =
+          p.severity_index_percent == null
+            ? null
+            : Number(p.severity_index_percent.toFixed(2));
         let level = null;
         let color = null;
         if (percent != null) {
           // <25 Green, 25–49 Yellow, ≥50 Red
-          if (percent < 25) { level = "Green"; color = "green"; }
-          else if (percent < 50) { level = "Yellow"; color = "yellow"; }
-          else { level = "Red"; color = "red"; }
+          if (percent < 25) {
+            level = "Green";
+            color = "green";
+          } else if (percent < 50) {
+            level = "Yellow";
+            color = "yellow";
+          } else {
+            level = "Red";
+            color = "red";
+          }
         }
         return {
           ...p,
@@ -147,58 +157,18 @@ module.exports = {
       if (!projectId) {
         throw new Error("Project ID is required for severity breakdown");
       }
-      
+
       const data = await severityBreakdownRepo.getSeverityBreakdown(projectId);
-      
+
       if (!data || data.length === 0) {
-        throw new Error(`No severity breakdown data found for project ID ${projectId}`);
+        throw new Error(
+          `No severity breakdown data found for project ID ${projectId}`
+        );
       }
-      
+
       return data;
     } catch (error) {
       throw new Error(`Failed to get severity breakdown: ${error.message}`);
     }
-  },
-  async getProjectCardColor(projectId) {
-    if (!projectId) {
-      throw new Error("Project ID is required");
-    }
-    // Fetch individual metrics (already apply thresholds and colors)
-    const [densityArr, ratioArr, severityArr] = await Promise.all([
-      getDefectDensity(projectId),
-      getDefectRemarkRatio(projectId),
-      this.getSeverityIndex(projectId),
-    ]);
-
-    const density = Array.isArray(densityArr) ? densityArr[0] : null;
-    const remark = Array.isArray(ratioArr) ? ratioArr[0] : null;
-    const severity = Array.isArray(severityArr) ? severityArr[0] : null;
-
-    const densityColor = density?.density_color || 'green'; // green | yellow | red
-    const remarkColor = remark?.remark_ratio_color || null; // green | yellow | red | null
-    const severityColor = severity?.severity_index_color || null; // green | yellow | red | null
-    
-    const colors = [densityColor, remarkColor, severityColor].filter(color => color !== null);
-    let finalColor = 'green';
-    if (colors.includes('red')) {
-      finalColor = 'red';
-    } else if (colors.includes('yellow')) {
-      finalColor = 'yellow';
-    } else {
-      finalColor = 'green';
-    }
-
-    return {
-      project_id: Number(projectId),
-      card_color: finalColor,
-      metrics: {
-        defect_density: density ? density.defect_density : null,
-        defect_density_color: densityColor,
-        severity_index_percent: severity ? severity.severity_index_percent : null,
-        severity_index_color: severityColor,
-        remark_ratio_percent: remark ? remark.defect_to_remark_ratio_percent : null,
-        remark_ratio_color: remarkColor,
-      },
-    };
   },
 };
