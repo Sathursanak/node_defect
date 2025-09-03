@@ -11,7 +11,11 @@ function getDefectDensityRange(density) {
   }
 }
 
-function getRemarkRatioRange(percent) {
+function getRemarkRatioRange(percent, total) {
+  // If no defects (0/0), always green
+  if (total === 0) {
+    return { level: "Low", color: "green" };
+  }
   // Defect Remark Ratio: 98–100 Green(low), 90–97 Yellow(medium), <90 Red(high)
   if (percent >= 98) {
     return { level: "Low", color: "green" };
@@ -70,14 +74,27 @@ async function getDefectRemarkRatio(projectId = null) {
 
     // Convert to percentage and add level/color per thresholds
     const processedData = filteredData.map((project) => {
+      const total = Number(project.total_defects ?? 0);
       const ratio = project.defect_to_remark_ratio;
-      const percent = ratio == null ? null : Number((ratio * 100).toFixed(2));
-      const range = percent == null ? { level: null, color: null } : getRemarkRatioRange(percent);
+      
+      // If no defects, return null values like severity_index
+      if (total === 0 || ratio == null) {
+        return {
+          ...project,
+          defect_to_remark_ratio_percent: null,
+          remark_ratio_level: null,
+          remark_ratio_color: null,
+        };
+      }
+      
+      const percent = Number((ratio * 100).toFixed(2));
+      const range = getRemarkRatioRange(percent, total);
+
       return {
         ...project,
-        defect_to_remark_ratio_percent: percent, // e.g., 96.55
-        remark_ratio_level: range.level,         // Low | Medium | High
-        remark_ratio_color: range.color,         // green | yellow | red
+        defect_to_remark_ratio_percent: percent,
+        remark_ratio_level: range.level,
+        remark_ratio_color: range.color,
       };
     });
 
@@ -141,5 +158,47 @@ module.exports = {
     } catch (error) {
       throw new Error(`Failed to get severity breakdown: ${error.message}`);
     }
+  },
+  async getProjectCardColor(projectId) {
+    if (!projectId) {
+      throw new Error("Project ID is required");
+    }
+    // Fetch individual metrics (already apply thresholds and colors)
+    const [densityArr, ratioArr, severityArr] = await Promise.all([
+      getDefectDensity(projectId),
+      getDefectRemarkRatio(projectId),
+      this.getSeverityIndex(projectId),
+    ]);
+
+    const density = Array.isArray(densityArr) ? densityArr[0] : null;
+    const remark = Array.isArray(ratioArr) ? ratioArr[0] : null;
+    const severity = Array.isArray(severityArr) ? severityArr[0] : null;
+
+    const densityColor = density?.density_color || 'green'; // green | yellow | red
+    const remarkColor = remark?.remark_ratio_color || null; // green | yellow | red | null
+    const severityColor = severity?.severity_index_color || null; // green | yellow | red | null
+    
+    const colors = [densityColor, remarkColor, severityColor].filter(color => color !== null);
+    let finalColor = 'green';
+    if (colors.includes('red')) {
+      finalColor = 'red';
+    } else if (colors.includes('yellow')) {
+      finalColor = 'yellow';
+    } else {
+      finalColor = 'green';
+    }
+
+    return {
+      project_id: Number(projectId),
+      card_color: finalColor,
+      metrics: {
+        defect_density: density ? density.defect_density : null,
+        defect_density_color: densityColor,
+        severity_index_percent: severity ? severity.severity_index_percent : null,
+        severity_index_color: severityColor,
+        remark_ratio_percent: remark ? remark.defect_to_remark_ratio_percent : null,
+        remark_ratio_color: remarkColor,
+      },
+    };
   },
 };

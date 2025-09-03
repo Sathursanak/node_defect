@@ -59,4 +59,19 @@ module.exports = {
       }
     }
   },
+  async getProjectCardColor(req, res) {
+    try {
+      const projectId = req.query.projectId || req.params.projectId || null;
+      const data = await dashboardService.getProjectCardColor(projectId);
+      res.status(200).json(data);
+    } catch (error) {
+      if (error.message.includes("required")) {
+        res.status(400).json({ message: error.message });
+      } else if (error.message.includes("not found")) {
+        res.status(404).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: error.message });
+      }
+    }
+  },
 };
